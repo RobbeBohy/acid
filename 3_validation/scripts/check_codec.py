@@ -57,6 +57,22 @@ def parse_args():
 def run(
     path_mplrc: Path, kernel_name: str, path_codec: Path, path_svg_codec: Path, path_svg_diff: Path
 ):
+    """
+    Validate numerical fidelity of the encoding and decoding scheme.
+
+    Parameters
+    ----------
+    path_mplrc
+        Path to the matplotlib configuration file.
+    kernel_name
+        Name of the kernel.
+    path_codec
+        Codec ZIP containing the encoding and decoding lookup tables.
+    path_svg_codec
+        Output SVG path for the ACF convergence plot.
+    path_svg_diff
+        Output SVG path for the ACF difference plot.
+    """
     mpl.rc_file(path_mplrc)
 
     path_py = f"../1_dataset/kernels/{kernel_name}.py"
@@ -132,6 +148,7 @@ def compute_acf(traj: NDArray[float]) -> NDArray[float]:
 
 
 def plot_convergence(lengths, float_acfs, codec_acfs, path_svg_codec):
+    """Plot convergence of autocorrelation estimates with trajectory length."""
     lags_to_check = [1, 2, 5, 10, 20, 50, 100]
 
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -161,6 +178,7 @@ def plot_convergence(lengths, float_acfs, codec_acfs, path_svg_codec):
 
 
 def plot_diffs(float_acfs, codec_acfs, path_svg_diff):
+    """Plot differences between encoded and floating-point autocorrelations."""
     fig, ax = plt.subplots(figsize=(6, 3))
     diff = codec_acfs[-1] - float_acfs[-1]
     lag = np.arange(len(float_acfs[-1]))

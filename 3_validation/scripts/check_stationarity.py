@@ -63,7 +63,29 @@ def run(
     path_svg_var: Path,
     path_svg_acf: Path,
 ):
+    """
+    Check empirical second-order stationarity of sampled trajectories.
+
+    Parameters
+        ----------
+        path_mplrc
+            Path to the matplotlib configuration file.
+        path_kernel
+            ZIP archive of the desired kernel.
+        path_codec
+            Codec ZIP used to decode integer sequences to floating-point values.
+        path_settings
+            JSON file specifying nsteps, nseqs, and nseeds.
+        path_svg_var
+            Output SVG path for the time-dependent variance plot.
+        path_svg_acf
+            Output SVG path for the autocorrelation difference plot.
+    """
     mpl.rc_file(path_mplrc)
+    nseq = 256
+    nstep = 1024
+
+    step_path = f"nstep{nstep:05d}/"
 
     lookup_table = np.load(path_codec)["midpoint"]
     unzipped_kernel = np.load(path_kernel)
@@ -73,18 +95,10 @@ def run(
 
     nseed = settings["nseed"]
 
-    # Use the largest available nstep for the strongest test
-    nstep = max(settings["nsteps"])
-
-    step_path = f"nstep{nstep:05d}/"
-
-    # Decode variance from metadata
     with zipfile.ZipFile(path_kernel) as zf, zf.open("meta.json") as f:
         meta = json.load(f)
 
     std = np.sqrt(meta["var"])
-
-    nseq = 256
 
     plot_time_dependent_variance(
         unzipped_kernel,

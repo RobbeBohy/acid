@@ -52,6 +52,23 @@ def parse_args():
 
 
 def run(path_mplrc: Path, path_kernel: Path, path_codec: Path, path_settings: Path, path_svg: Path):
+    """
+    Validate the empirical covariance against the covariance of the analytical kernel.
+
+    Parameters
+    ----------
+    path_mplrc
+        Path to the matplotlib configuration file.
+    path_kernel
+        ZIP archive of the kernel.
+    path_codec
+        Codec ZIP used to decode integer sequences to floating-point values.
+    path_settings
+        JSON file specifying the number of steps, number of sequences,
+        and number of seeds used for sampling.
+    path_svg
+        Output SVG path for the covariance eigenvalue comparison plot.
+    """
     mpl.rc_file(path_mplrc)
     lookup_table = np.load(path_codec)["midpoint"]
     unzipped_kernel = np.load(path_kernel)
@@ -93,6 +110,7 @@ def run(path_mplrc: Path, path_kernel: Path, path_codec: Path, path_settings: Pa
 
 
 def plot_covariance_eigenvals(analytical_eigenval, empirical_eigenval, path_svg):
+    """Plot analytical and empirical covariance eigenvalue spectra."""
     fig, axes = plt.subplots(2, 1, figsize=(7, 8))
     times = np.arange(analytical_eigenval.shape[0])
 

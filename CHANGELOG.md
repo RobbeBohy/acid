@@ -20,6 +20,11 @@ A major refactoring of the ACID dataset.
 - Added empirical MSD calculations from the trajectories.
 - Added a section on trajectory generation using linear stochastic differential equations in `overview.typ`.
 - Added a note on the calculation of `corrtime_int` in `overview.typ`.
+- Added a dedicated validation workflow `3_validation` to systematically test the encoding/decoding scheme,
+  stationarity of the sampled sequences,
+  correctness of the quadrature scheme in `PolyTerm`,
+  low-frequency behavior of the PSD,
+  and consistency between sampled trajectories and the target autocorrelation functions.
 
 ### Changed
 

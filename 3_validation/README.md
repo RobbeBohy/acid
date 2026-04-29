@@ -3,12 +3,10 @@ SPDX-FileCopyrightText: © 2026 ACID Contributors <https://doi.org/10.5281/zenod
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
-# Data Generation
+# Data Validation Workflow
 
 Please see the top-level [`README.md`](../README.md) file
 for information on licenses, citation and setup of the Python Virtual Environment.
-
-# Workflow for validation of the dataset
 
 ## Instructions for Rerunning the validation workflow
 

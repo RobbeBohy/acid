@@ -41,6 +41,13 @@ def run(path_mplrc: Path, path_svg: Path):
     This function constructs the polynomial ACID autocorrelation function
     using a rational Chebyshev quadrature over exponential kernels and
     compares it against the closed-form analytical expression.
+
+    Parameters
+    ----------
+    path_mplrc
+        Path to the matplotlib configuration file.
+    path_svg
+        Output SVG path for the comparison plot.
     """
     mpl.rc_file(path_mplrc)
 
@@ -71,6 +78,7 @@ def run(path_mplrc: Path, path_svg: Path):
 
 
 def plot_sampling_bias(times, quadrature_acf, analytical_acf, path_svg):
+    """Plot quadrature-based and analytical autocorrelation functions."""
     rel_err = np.abs(quadrature_acf - analytical_acf) / analytical_acf
 
     fig = plt.figure(figsize=(6, 4))
@@ -78,15 +86,13 @@ def plot_sampling_bias(times, quadrature_acf, analytical_acf, path_svg):
 
     ax.plot(times, quadrature_acf, "r-", lw=2, label="Quadrature")
     ax.plot(times, analytical_acf, "k:", lw=2, label="Analytical")
-
     ax.set_xlabel("Time lag")
     ax.set_ylabel("ACF")
 
+    # Inset figure with relative errors
     ax_in = fig.add_axes([0.55, 0.45, 0.35, 0.35])
-
     ax_in.plot(times, rel_err, color="0.3", lw=1)
     ax_in.set_ylim(0, 1e-14)
-
     ax_in.set_xlabel("Time lag", fontsize=8)
     ax_in.set_ylabel("Relative error", fontsize=8)
     ax_in.tick_params(labelsize=8)

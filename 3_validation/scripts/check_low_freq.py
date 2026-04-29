@@ -28,6 +28,13 @@ def parse_args():
 
 
 def run(path_kernel: Path):
+    """Check the low-frequency behavior of a kernel PSD.
+
+    Parameters
+    ----------
+    path_kernel
+        Path to the ZIP archive of the kernel.
+    """
     nstep = 1024
 
     unzipped_kernel = np.load(path_kernel)
@@ -69,17 +76,14 @@ def check_low_freq(freqs: NDArray, psd: NDArray):
         my_psd = psd[:nfit].copy()
 
         # Fit a simple quadratic, manually for robustness
-        # my_psd -= my_psd.mean()
         my_psd -= my_psd[0]
         quad = my_freqs**2
-        # quad -= quad.mean()
         par_quad = np.dot(quad, my_psd) / np.dot(quad, quad)
         fit_quad = par_quad * quad
         relerr_quad = float(np.linalg.norm(fit_quad - my_psd) / np.linalg.norm(my_psd))
 
         # Fit a polynomial function with exponent = 1/2, manually for robustness
         sqrt = np.sqrt(my_freqs)
-        # sqrt -= sqrt.mean()
         par_sqrt = np.dot(sqrt, my_psd) / np.dot(sqrt, sqrt)
         fit_sqrt = par_sqrt * sqrt
         relerr_sqrt = float(np.linalg.norm(fit_sqrt - my_psd) / np.linalg.norm(my_psd))
