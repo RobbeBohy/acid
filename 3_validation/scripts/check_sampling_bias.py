@@ -68,12 +68,10 @@ def run(path_mplrc: Path, path_svg: Path):
     taus = taus[mask]
     weights = weights[mask]
 
-    quadrature_acf = 0
+    prefactor = a0 * (alpha - 1) / (2 * theta)
+    quadrature_acf = (weights * prefactor) @ np.exp(-np.outer(1 / taus, times))
 
-    for tau, weight in zip(taus, weights, strict=True):
-        quadrature_acf += weight * a0 * (alpha - 1) / (2 * theta) * np.exp(-times / tau)
-
-    analytical_acf = a0 * (alpha - 1) / (2 * theta) * (1 + abs(times) / theta) ** (-alpha)
+    analytical_acf = prefactor * (1 + abs(times) / theta) ** (-alpha)
     plot_sampling_bias(times, quadrature_acf, analytical_acf, path_svg)
 
 
