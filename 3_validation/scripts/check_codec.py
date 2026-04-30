@@ -97,10 +97,10 @@ def run(
     nseq = 1
 
     # We only need the time = 0 to determine the variance
-    times = np.arange(20, dtype=float)
-    freqs = np.fft.rfftfreq(20)
+    times = np.arange(16, dtype=float)
+    freqs = np.fft.rfftfreq(16)
     _, acf_analyt, _, _, _, _, _ = compute(terms, freqs, times)
-    var = acf_analyt[0]
+    std = np.sqrt(acf_analyt[0])
 
     float_acfs = np.zeros((len(lengths), lengths[-1]))
     codec_acfs = np.zeros((len(lengths), lengths[-1]))
@@ -109,18 +109,16 @@ def run(
         seed = np.frombuffer(f"{kernel_name}_{term}".encode("ascii"), dtype=np.uint8)
         rng = np.random.default_rng(seed)
         float_traj = term.sample(nseq, nstep, rng)
-        encoded_traj = lookup_integer(float_traj, np.sqrt(var), lookup_table_boundary)
+        encoded_traj = lookup_integer(float_traj, std, lookup_table_boundary)
 
         if encoded_traj.max() >= IMAX:
             raise ValueError(f"ppfi exceeds {IMAX - 1}")
         if encoded_traj.min() < 0:
             raise ValueError("Negative ppfi values found")
         encoded_traj = encoded_traj.astype(SEQ_DTYPE)
-        decoded_traj = lookup_table_midpoint[encoded_traj] * np.sqrt(var)
+        decoded_traj = lookup_table_midpoint[encoded_traj] * std
 
         for ilength, length in enumerate(lengths):
-            seed = np.frombuffer(f"{ilength:d}{length}".encode("ascii"), dtype=np.uint8)
-            rng = np.random.default_rng(seed)
             float_acfs[ilength, :length] += compute_acf(float_traj[:, :length])
             codec_acfs[ilength, :length] += compute_acf(decoded_traj[:, :length])
 
@@ -149,6 +147,8 @@ def compute_acf(traj: NDArray[float]) -> NDArray[float]:
 
 def plot_convergence(lengths, float_acfs, codec_acfs, path_svg_codec):
     """Plot convergence of autocorrelation estimates with trajectory length."""
+
+    # A few arbitrary lags are selected to be checked
     lags_to_check = [1, 2, 5, 10, 20, 50, 100]
 
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -171,7 +171,7 @@ def plot_convergence(lengths, float_acfs, codec_acfs, path_svg_codec):
         )
 
     ax.set_xscale("log")
-    ax.set_xlabel("Time steps")
+    ax.set_xlabel("Number of steps")
     ax.set_ylabel("ACF")
 
     fig.savefig(path_svg_codec)

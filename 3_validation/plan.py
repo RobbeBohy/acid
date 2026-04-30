@@ -72,6 +72,7 @@ for kernel in settings.kernels:
         inp=[
             "scripts/check_low_freq.py",
             dataset_output_path + f"{kernel}.zip",
+            dataset_path + "settings.json",
         ],
     )
 

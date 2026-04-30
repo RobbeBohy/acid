@@ -4,6 +4,7 @@
 """Check the low-frequency part of the PSD."""
 
 import argparse
+import json
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,7 +13,7 @@ from path import Path
 
 def main():
     args = parse_args()
-    run(args.zip_in)
+    run(args.zip_in, args.settings)
 
 
 def parse_args():
@@ -24,19 +25,31 @@ def parse_args():
         type=Path,
         help="The zip file of the kernel to check.",
     )
+    parser.add_argument(
+        "settings",
+        type=Path,
+        help="The settings.json file.",
+    )
     return parser.parse_args()
 
 
-def run(path_kernel: Path):
+def run(path_kernel: Path, path_settings: Path):
     """Check the low-frequency behavior of a kernel PSD.
 
     Parameters
     ----------
     path_kernel
         Path to the ZIP archive of the kernel.
+    path_settings
+        JSON file specifying the number of steps, number of sequences,
+        and number of seeds used for sampling.
     """
-    nstep = 1024
+    with open(path_settings) as f:
+        settings = json.load(f)
 
+    # The shortest trajectory length strongly amplifies finite-sample effects and is
+    # therefore not representative for assessing convergence and bias in this check.
+    nstep = settings["nsteps"][1]
     unzipped_kernel = np.load(path_kernel)
     step_path = f"nstep{nstep:05d}/"
     psd = unzipped_kernel[step_path + "psd.npy"]

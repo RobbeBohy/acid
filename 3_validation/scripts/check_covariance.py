@@ -73,23 +73,24 @@ def run(path_mplrc: Path, path_kernel: Path, path_codec: Path, path_settings: Pa
     lookup_table = np.load(path_codec)["midpoint"]
     unzipped_kernel = np.load(path_kernel)
 
-    nstep = 1024
-    nseq = 256
+    with open(path_settings) as f:
+        settings = json.load(f)
 
-    with open(path_settings) as f0:
-        settings = json.load(f0)
+    nseed = settings["nseed"]
+    nseq = settings["nseqs"][-1]
+    # The shortest trajectory length strongly amplifies finite sample effects and is
+    # therefore not representative for assessing convergence and bias in this check.
+    nstep = settings["nsteps"][1]
 
     step_path = f"nstep{nstep:05d}/"
     analytical_acf = unzipped_kernel[step_path + "acf.npy"]
     analytical_covar = sp.linalg.toeplitz(analytical_acf)
 
-    nseed = settings["nseed"]
     with zipfile.ZipFile(path_kernel) as zf, zf.open("meta.json") as f:
         meta = json.load(f)
 
     std = np.sqrt(meta["var"])
 
-    empirical_covar = np.zeros((nstep, nstep))
     empirical_acf = np.zeros(nstep)
 
     for iseed in range(nseed):
@@ -111,20 +112,22 @@ def run(path_mplrc: Path, path_kernel: Path, path_codec: Path, path_settings: Pa
 
 def plot_covariance_eigenvals(analytical_eigenval, empirical_eigenval, path_svg):
     """Plot analytical and empirical covariance eigenvalue spectra."""
-    fig, axes = plt.subplots(2, 1, figsize=(7, 8))
+    fig, ax = plt.subplots(figsize=(6, 4))
     times = np.arange(analytical_eigenval.shape[0])
 
-    axes[0].plot(times, empirical_eigenval, "r-", lw=2)
-    axes[0].plot(times, analytical_eigenval, "k:", lw=2)
-
-    axes[0].set_xlabel("Eigenvalue index")
-    axes[0].set_ylabel("Eigenvalue")
+    ax.plot(times, empirical_eigenval, "r-", lw=2)
+    ax.plot(times, analytical_eigenval, "k:", lw=2)
+    ax.set_xlabel("Eigenvalue index")
+    ax.set_ylabel("Eigenvalue")
 
     rel_error = (empirical_eigenval - analytical_eigenval) / analytical_eigenval
-    axes[1].axhline(0, color="k", lw=1, ls="--")
-    axes[1].plot(times, rel_error, "r-", lw=2)
-    axes[1].set_xlabel("Eigenvalue index")
-    axes[1].set_ylabel("Relative error")
+
+    # Inset plot with relative errors
+    ax_in = fig.add_axes([0.55, 0.45, 0.35, 0.35])
+    ax_in.axhline(0, color="k", lw=1, ls="--")
+    ax_in.plot(times, rel_error, color="0.3", lw=1)
+    ax_in.set_xlabel("Eigenvalue index")
+    ax_in.set_ylabel("Relative error")
 
     fig.savefig(path_svg)
 

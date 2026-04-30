@@ -67,26 +67,21 @@ def run(
     Check empirical second-order stationarity of sampled trajectories.
 
     Parameters
-        ----------
-        path_mplrc
-            Path to the matplotlib configuration file.
-        path_kernel
-            ZIP archive of the desired kernel.
-        path_codec
-            Codec ZIP used to decode integer sequences to floating-point values.
-        path_settings
-            JSON file specifying nsteps, nseqs, and nseeds.
-        path_svg_var
-            Output SVG path for the time-dependent variance plot.
-        path_svg_acf
-            Output SVG path for the autocorrelation difference plot.
+    ----------
+    path_mplrc
+        Path to the matplotlib configuration file.
+    path_kernel
+        ZIP archive of the desired kernel.
+    path_codec
+        Codec ZIP used to decode integer sequences to floating-point values.
+    path_settings
+        JSON file specifying nsteps, nseqs, and nseeds.
+    path_svg_var
+        Output SVG path for the time-dependent variance plot.
+    path_svg_acf
+        Output SVG path for the autocorrelation difference plot.
     """
     mpl.rc_file(path_mplrc)
-    nseq = 256
-    nstep = 1024
-
-    step_path = f"nstep{nstep:05d}/"
-
     lookup_table = np.load(path_codec)["midpoint"]
     unzipped_kernel = np.load(path_kernel)
 
@@ -94,6 +89,11 @@ def run(
         settings = json.load(f)
 
     nseed = settings["nseed"]
+    nseq = settings["nseqs"][-1]
+    # The shortest trajectory length strongly amplifies finite-sample effects and is
+    # therefore not representative for assessing convergence and bias in this check.
+    nstep = settings["nsteps"][1]
+    step_path = f"nstep{nstep:05d}/"
 
     with zipfile.ZipFile(path_kernel) as zf, zf.open("meta.json") as f:
         meta = json.load(f)
@@ -175,12 +175,10 @@ def plot_acf_consistency(
 
     for ibin, b in enumerate(bins):
         acf = np.zeros(max_lag)
-
         for iseed in range(nseed):
             sample_path = f"{step_path}nseq{nseq:04d}/sequences_{iseed:02d}.npy"
             cdfi = unzipped_kernel[sample_path]
             traj = lookup_table[cdfi] * std
-
             block = traj[:, b]
 
             for lag in range(max_lag):
