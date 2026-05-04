@@ -67,12 +67,3 @@ for kernel in settings.kernels:
         ],
         out=[f"output/{kernel}_codec_conv.svg", f"output/{kernel}_codec_diff.svg"],
     )
-
-runpy(
-    "./${inp} ${out}",
-    inp=[
-        "scripts/check_sampling_bias.py",
-        "../matplotlibrc",
-    ],
-    out=["output/quadrature_test.svg"],
-)
