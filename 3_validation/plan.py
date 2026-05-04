@@ -67,14 +67,6 @@ for kernel in settings.kernels:
         ],
         out=[f"output/{kernel}_codec_conv.svg", f"output/{kernel}_codec_diff.svg"],
     )
-    runpy(
-        "./${inp}",
-        inp=[
-            "scripts/check_low_freq.py",
-            dataset_output_path + f"{kernel}.zip",
-            dataset_path + "settings.json",
-        ],
-    )
 
 runpy(
     "./${inp} ${out}",

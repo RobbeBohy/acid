@@ -1,64 +1,34 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: © 2026 ACID Contributors <https://doi.org/10.5281/zenodo.15722902>
 # SPDX-License-Identifier: CC-BY-SA-4.0 OR LGPL-3.0-or-later
 """Check the low-frequency part of the PSD."""
 
-import argparse
 import json
+from runpy import run_path
 
 import numpy as np
+from kernels import compute
 from numpy.typing import NDArray
-from path import Path
+from stepup.core.api import amend
 
 
-def main():
-    args = parse_args()
-    run(args.zip_in, args.settings)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Check whether the low-frequency part of the PSD is well behaved."
-    )
-    parser.add_argument(
-        "zip_in",
-        type=Path,
-        help="The zip file of the kernel to check.",
-    )
-    parser.add_argument(
-        "settings",
-        type=Path,
-        help="The settings.json file.",
-    )
-    return parser.parse_args()
-
-
-def run(path_kernel: Path, path_settings: Path):
-    """Check the low-frequency behavior of a kernel PSD.
-
-    Parameters
-    ----------
-    path_kernel
-        Path to the ZIP archive of the kernel.
-    path_settings
-        JSON file specifying the number of steps, number of sequences,
-        and number of seeds used for sampling.
-    """
-    with open(path_settings) as f:
+def test_low_freqs():
+    """Check the low-frequency behavior of the PSD of each kernel"""
+    with open("./1_dataset/settings.json") as f:
         settings = json.load(f)
 
-    # The shortest trajectory length strongly amplifies finite-sample effects and is
-    # therefore not representative for assessing convergence and bias in this check.
-    nstep = settings["nsteps"][1]
-    unzipped_kernel = np.load(path_kernel)
-    step_path = f"nstep{nstep:05d}/"
-    psd = unzipped_kernel[step_path + "psd.npy"]
-    freqs = unzipped_kernel[step_path + "freqs.npy"]
+    nstep = 1024
+    times = np.arange(nstep, dtype=float)
+    freqs = np.fft.rfftfreq(nstep)
 
-    check_low_freq(freqs, psd)
+    for kernel_name in settings["kernels"]:
+        path_py = f"./1_dataset/kernels/{kernel_name}.py"
+        amend(inp=path_py)
+        terms = run_path(path_py)["terms"]
+        psd = compute(terms, freqs, times)[0]
+        check_low_freq(kernel_name, freqs, psd)
 
 
-def check_low_freq(freqs: NDArray, psd: NDArray):
+def check_low_freq(kernel: str, freqs: NDArray, psd: NDArray):
     """
     Check the low-frequency PSD against simple reference models.
 
@@ -79,6 +49,8 @@ def check_low_freq(freqs: NDArray, psd: NDArray):
 
     Parameters
     ----------
+    kernel
+        The name of the kernel.
     freqs
          The array of frequencies for which to compute the spectrum.
     psd
@@ -103,12 +75,8 @@ def check_low_freq(freqs: NDArray, psd: NDArray):
 
         relerr_best_fit = min(relerr_quad, relerr_sqrt)
 
-        if relerr_best_fit > threshold:
-            raise ValueError(
-                "The PSD is not approximated well by a simple model in the low-frequency domain:"
-                f" {nfit=} {threshold=} {relerr_best_fit=}"
-            )
-
-
-if __name__ == "__main__":
-    main()
+        assert relerr_best_fit <= threshold, (
+            f"The PSD for {kernel=} is not approximated well by a simple model "
+            f"in the low-frequency domain "
+            f"({nfit=}, {threshold=}, {relerr_best_fit=})"
+        )
