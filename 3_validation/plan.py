@@ -56,7 +56,7 @@ for kernel in settings.kernels:
             dataset_output_path + "codec.zip",
             dataset_path + "settings.json",
         ],
-        out=[f"output/{kernel}_stat_var.svg", f"output/{kernel}_stat_acf.svg"],
+        out=[f"output/{kernel}_qq_stationarity.svg"],
     )
     runpy(
         f"./${{inp}} {kernel} ${{out}}",

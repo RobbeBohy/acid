@@ -10,12 +10,13 @@ import zipfile
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
 from path import Path
 
 
 def main():
     args = parse_args()
-    run(args.mplrc, args.zip_in, args.codec, args.settings, args.svg_var, args.svg_acf)
+    run(args.mplrc, args.zip_in, args.codec, args.settings, args.svg_qq)
 
 
 def parse_args():
@@ -43,14 +44,9 @@ def parse_args():
         help="The settings.json file.",
     )
     parser.add_argument(
-        "svg_var",
+        "svg_qq",
         type=Path,
-        help="The output SVG path for the time-dependent variance plot.",
-    )
-    parser.add_argument(
-        "svg_acf",
-        type=Path,
-        help="The output SVG path for the local ACF difference plot.",
+        help="The output SVG path for the QQ plot.",
     )
     return parser.parse_args()
 
@@ -60,8 +56,7 @@ def run(
     path_kernel: Path,
     path_codec: Path,
     path_settings: Path,
-    path_svg_var: Path,
-    path_svg_acf: Path,
+    path_svg_qq: Path,
 ):
     """
     Check empirical second-order stationarity of sampled trajectories.
@@ -76,10 +71,8 @@ def run(
         Codec ZIP used to decode integer sequences to floating-point values.
     path_settings
         JSON file specifying nsteps, nseqs, and nseeds.
-    path_svg_var
-        Output SVG path for the time-dependent variance plot.
-    path_svg_acf
-        Output SVG path for the autocorrelation difference plot.
+    path_svg_qq
+        Output SVG path for the QQ plot.
     """
     mpl.rc_file(path_mplrc)
     lookup_table = np.load(path_codec)["midpoint"]
@@ -89,10 +82,10 @@ def run(
         settings = json.load(f)
 
     nseed = settings["nseed"]
-    nseq = settings["nseqs"][-1]
     # The shortest trajectory length strongly amplifies finite-sample effects and is
     # therefore not representative for assessing convergence and bias in this check.
     nstep = settings["nsteps"][1]
+    nseq = settings["nseqs"][-1]
     step_path = f"nstep{nstep:05d}/"
 
     with zipfile.ZipFile(path_kernel) as zf, zf.open("meta.json") as f:
@@ -100,107 +93,41 @@ def run(
 
     std = np.sqrt(meta["var"])
 
-    plot_time_dependent_variance(
-        unzipped_kernel,
-        lookup_table,
-        std,
-        nstep,
-        nseq,
-        nseed,
-        step_path,
-        path_svg_var,
-    )
+    slice_length = 200
+    init_slice = slice(0, slice_length)
+    final_slice = slice(nstep - slice_length, nstep)
 
-    plot_acf_consistency(
-        unzipped_kernel,
-        lookup_table,
-        std,
-        nstep,
-        nseq,
-        nseed,
-        step_path,
-        path_svg_acf,
-    )
-
-
-def plot_time_dependent_variance(
-    unzipped_kernel,
-    lookup_table,
-    std,
-    nstep,
-    nseq,
-    nseed,
-    step_path,
-    path_svg,
-):
-    """Check that the variance is approximately constant in time."""
-    var_t = np.zeros(nstep)
+    init_traj = []
+    final_traj = []
 
     for iseed in range(nseed):
-        sample_path = step_path + f"nseq{nseq:04d}/sequences_{iseed:02d}.npy"
+        sample_path = f"{step_path}nseq{nseq:04d}/sequences_{iseed:02d}.npy"
         cdfi = unzipped_kernel[sample_path]
         traj = lookup_table[cdfi] * std
-        var_t += np.mean(traj**2, axis=0)
 
-    var_t /= nseed
-    var_t -= var_t[0]
+        init_traj.append(traj[:, init_slice].ravel())
+        final_traj.append(traj[:, final_slice].ravel())
 
-    fig, ax = plt.subplots(figsize=(6, 3))
+    init_samples = np.concatenate(init_traj)
+    final_samples = np.concatenate(final_traj)
 
-    ax.plot(var_t)
-    ax.set_xlabel("Time index")
-    ax.set_ylabel("Var(t) - Var(0)")
+    init_samples.sort()
+    final_samples.sort()
 
-    fig.savefig(path_svg)
+    plot_qq(init_samples, final_samples, path_svg_qq)
 
 
-def plot_acf_consistency(
-    unzipped_kernel,
-    lookup_table,
-    std,
-    nstep,
-    nseq,
-    nseed,
-    step_path,
-    path_svg,
-):
-    """Check consistency of the autocorrelation across time windows."""
-    # The maximum time lag that will be plotted
-    max_lag = 150
+def plot_qq(init_samples, final_samples, path_svg):
+    """Generates a QQ plot between the early-time samples and the late-time sample."""
+    fig, ax = plt.subplots(figsize=(4, 4))
+    ax.scatter(init_samples, final_samples, rasterized=True, s=1, alpha=0.15)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("Early-time quantiles")
+    ax.set_ylabel("Late-time quantiles")
 
-    # The number of time lags that will be compared
-    nbins = 4
-    bins = np.array_split(np.arange(nstep), nbins)
-    acf_blocks = np.zeros((nbins, max_lag))
+    wasserstein_dist = sp.stats.wasserstein_distance(init_samples, final_samples)
+    ax.set_title(f"Wasserstein distance = {wasserstein_dist:.5e}")
 
-    for ibin, b in enumerate(bins):
-        acf = np.zeros(max_lag)
-        for iseed in range(nseed):
-            sample_path = f"{step_path}nseq{nseq:04d}/sequences_{iseed:02d}.npy"
-            cdfi = unzipped_kernel[sample_path]
-            traj = lookup_table[cdfi] * std
-            block = traj[:, b]
-
-            for lag in range(max_lag):
-                acf[lag] += np.mean(block[:, : len(b) - lag] * block[:, lag:])
-
-        acf_blocks[ibin] = acf / nseed
-
-    fig, ax = plt.subplots(figsize=(6, 3))
-    acf_diffs = acf_blocks - acf_blocks[0]
-
-    for ibin in range(1, nbins):
-        ax.plot(
-            acf_diffs[ibin],
-            lw=1.2,
-            label=f"block {ibin} - block 0",
-        )
-
-    ax.axhline(0.0, color="k", ls="--", lw=0.8)
-
-    ax.set_xlabel("Lag")
-    ax.set_ylabel("ACF")
-    ax.legend()
     fig.savefig(path_svg)
 
 
