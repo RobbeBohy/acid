@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: CC-BY-SA-4.0 OR LGPL-3.0-or-later
 """Sanity check for the standalone example script shown in the dataset overview."""
 
-import os
 from pathlib import Path
 from runpy import run_path
 
@@ -21,27 +20,13 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture(scope="module")
-def namespace():
-    original_cwd = os.getcwd()
-    os.chdir(OUTPUT)
-    try:
-        return run_path(str(EXAMPLE_SCRIPT))
-    finally:
-        os.chdir(original_cwd)
+def test_example_usage(monkeypatch):
+    monkeypatch.chdir(OUTPUT)
+    example_namespace = run_path(str(EXAMPLE_SCRIPT))
 
+    sequences = example_namespace["sequences"]
 
-def test_decode(namespace):
-    assert namespace["sequences"].dtype == float
-
-
-def test_acf(namespace):
-    assert np.array_equal(namespace["acfs"], compute_acfs(namespace["sequences"]))
-
-
-def test_psd(namespace):
-    assert np.array_equal(namespace["psds"], compute_amplitudes(namespace["sequences"]))
-
-
-def test_msd(namespace):
-    assert np.array_equal(namespace["msds"], compute_msds(namespace["sequences"]))
+    assert sequences.dtype == float
+    assert np.array_equal(example_namespace["acfs"], compute_acfs(sequences))
+    assert np.array_equal(example_namespace["psds"], compute_amplitudes(sequences))
+    assert np.array_equal(example_namespace["msds"], compute_msds(sequences))
