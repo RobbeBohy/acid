@@ -85,4 +85,4 @@ runpy(
     out=["output/stationarity.csv"],
 )
 
-compile_typst("validation.typ")
+compile_typst("validation.typ", sysinp={"stationarity": Path("output/stationarity.csv")})
