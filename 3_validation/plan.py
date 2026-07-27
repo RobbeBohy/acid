@@ -79,4 +79,10 @@ runpy(
     out=["output/acf_consist.svg", "output/stationarity.svg", "output/codec.svg"],
 )
 
+runpy(
+    "./${inp} ${out}",
+    inp=["scripts/tabulate_stat.py", *stat_paths],
+    out=["output/stationarity.csv"],
+)
+
 compile_typst("validation.typ")
