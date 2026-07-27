@@ -158,8 +158,9 @@ $
   H_0 : z_i tilde.op cal(N)(0, 1)
 $
 
+// TODO: Adapt text for new table instead of plot
 The resulting test statistics and $p$-values are reported for each relative time,
-together with corresponding Q-Q plots comparing empirical and theoretical quantiles in @fig-stat.
+// together with corresponding Q-Q plots comparing empirical and theoretical quantiles in @fig-stat.
 
 As in the ACF consistency analysis,
 individual $p$-values should be interpreted with care:
@@ -174,16 +175,7 @@ Instead of relying on these individual $p$-values,
 the assessment focuses on consistency across early, intermediate, and late times,
 together with the agreement observed in the Q-Q plots.
 
-#figure(
-  image("output/stationarity.svg"),
-  caption: [
-Validation of stationarity.
-Q-Q plots of $x(t)$ at relative times $t/N = 0.01$, $0.5$, and $0.9$.
-Theoretical quantiles are computed from $cal(N)(0, sigma^2)$.
-The dotted line indicates perfect agreement.
-  ],
-) <fig-stat>
-
+// TODO: Add table
 
 = Encoding/decoding scheme
 

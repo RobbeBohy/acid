@@ -74,9 +74,9 @@ for kernel in settings.kernels:
 
 runpy(
     f"./scripts/plot.py ../matplotlibrc --acf_consist {' '.join(acf_consist_paths)} "
-    f"--stat {' '.join(stat_paths)} --codec {' '.join(codec_paths)} -- ${{out}}",
-    inp=["scripts/plot.py", "../matplotlibrc", *acf_consist_paths, *stat_paths, *codec_paths],
-    out=["output/acf_consist.svg", "output/stationarity.svg", "output/codec.svg"],
+    f"--codec {' '.join(codec_paths)} -- ${{out}}",
+    inp=["scripts/plot.py", "../matplotlibrc", *acf_consist_paths, *codec_paths],
+    out=["output/acf_consist.svg", "output/codec.svg"],
 )
 
 runpy(
