@@ -24,8 +24,7 @@ A major refactoring of the ACID dataset.
 - Added a dedicated validation workflow `3_validation` to verify the encoding/decoding scheme,
   the stationarity of sampled trajectories,
   and consistency between sampled trajectories and the target autocorrelation functions.
-- Added a comprehensive set of unit tests to verify the low-frequency part of the PSD,
-  the accuracy of the quadrature scheme in `PowTerm`,
+- Added a set of unit tests to verify the accuracy of the quadrature scheme in `PowTerm`
   and the analytical derivations relating the PSD, MSD, and ACF.
 - Added `validation.typ`,
   documenting the methodologies and results of the tests in `3_validation/`.
@@ -52,6 +51,7 @@ A major refactoring of the ACID dataset.
 - The validation workflows have been migrated to a separate repository,
   and are no longer included here.
   See <https://github.com/molmod/acid-test>
+- Removed the constraint that the PSDs near zero frequency must be approximable by a quadratic fit within specified error thresholds.
 
 ## [1.2.1] - 2026-05-04
 
