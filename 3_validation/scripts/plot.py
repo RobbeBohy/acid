@@ -96,7 +96,7 @@ def run(
     mpl.rc_file(path_mplrc)
     fig1, axs1 = plt.subplots(8, 3, figsize=(7, 10))
     fig2, axs2 = plt.subplots(4, 3, figsize=(7, 10))
-    fig3, axs3 = plt.subplots(8, 3, figsize=(7, 10), sharex=True)
+    fig3, axs3 = plt.subplots(4, 3, figsize=(7, 10), sharex=True)
 
     for i, path_acf_npz in enumerate(paths_acf_consist_npz):
         row = i // 3
@@ -115,12 +115,10 @@ def run(
             col == 0,
         )
         plot_codec(
-            axs3[2 * row, col],
-            axs3[2 * row + 1, col],
+            axs3[row, col],
             paths_codec_npz[i],
             row == 3,
             col == 0,
-            row == 0 and col == 2,
         )
 
     fig1.savefig(path_svg_acf_consist)
@@ -215,67 +213,43 @@ def plot_stat(ax, npz, xlabel, ylabel):
     ax.legend(fontsize="x-small", markerscale=1, loc="upper left")
 
 
-def plot_codec(ax_rmse, ax_diff, npz, xlabel, ylabel, legend):
+def plot_codec(ax, npz, xlabel, ylabel):
     data = np.load(npz, allow_pickle=True)
-    rmse_raw = data["rmse_raw"]
-    rmse_ref_per_resolution = data["rmse_ref_per_resolution"].item()
-    rmse_raw_per_resolution = data["rmse_raw_per_resolution"].item()
+    rmse_raw_per_seed = data["rmse_raw_per_seed"]
+    rmse_codec_per_seed = data["rmse_codec_per_seed"].item()
 
     # Production resolution (uint16)
     production_resolution = 2**16
 
-    resolutions = list(rmse_ref_per_resolution.keys())
-    rmses_ref = np.array([rmse_ref_per_resolution[r] for r in resolutions])
-    rmses_raw = np.array([rmse_raw_per_resolution[r] for r in resolutions])
-
+    resolutions = list(rmse_codec_per_seed.keys())
+    rmses_codec = np.array([rmse_codec_per_seed[r].mean() for r in resolutions])
     prod_idx = list(resolutions).index(production_resolution)
 
-    ax_rmse.axhline(rmse_raw, color="r", linestyle="--", linewidth=0.8, label="Float precision")
-    ax_rmse.plot(resolutions, rmses_ref, marker="o", markersize=4, linewidth=1, color="k")
-    ax_rmse.plot(
-        production_resolution,
-        rmses_ref[prod_idx],
-        marker="o",
-        markersize=4,
-        color="r",
-        label="Production resolution",
-    )
-    ax_rmse.set_title(npz.stem.split("_")[0])
-    ax_rmse.set_xscale("log", base=2)
-    if ylabel:
-        ax_rmse.set_ylabel(r"$\mathrm{RMSE}_{\mathrm{codec, ref}}$")
-    ax_rmse.set_xticks(resolutions)
-    ax_rmse.set_xticklabels([f"$2^{{{int(np.log2(r))}}}$" for r in resolutions])
-    ax_rmse.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-
-    if legend:
-        ax_rmse.legend()
-
-    ax_diff.plot(
-        resolutions,
-        rmses_raw,
-        marker="o",
-        markersize=4,
-        linewidth=1,
-        color="k",
-    )
-    ax_diff.plot(
-        production_resolution,
-        rmses_raw[prod_idx],
-        marker="o",
-        markersize=4,
-        color="r",
-        label="Production resolution",
-    )
-    ax_diff.set_xscale("log", base=2)
-    ax_diff.set_yscale("log")
+    ax.plot(resolutions, rmses_codec, marker="o", markersize=4, linewidth=1, color="k")
+    ax.plot(production_resolution, rmses_codec[prod_idx], marker="o", markersize=4, color="r")
+    ax.set_title(npz.stem.split("_")[0])
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
     if xlabel:
-        ax_diff.set_xlabel("Codec resolution (number of bins)")
+        ax.set_xlabel("Codec resolution (number of bins)")
     if ylabel:
-        ax_diff.set_ylabel(r"$\mathrm{RMSE}_{\mathrm{codec, float}}$")
+        ax.set_ylabel(r"$\mathrm{RMSE}_{\mathrm{codec, float}}$")
+    ax.set_xticks(resolutions)
+    ax.set_xticklabels([f"$2^{{{int(np.log2(r))}}}$" for r in resolutions])
 
-    ax_diff.set_xticks(resolutions)
-    ax_diff.set_xticklabels([f"$2^{{{int(np.log2(r))}}}$" for r in resolutions])
+    rmse_baseline = rmse_raw_per_seed.mean()
+    power10 = int(np.floor(np.log10(rmse_baseline)))
+    coeff = rmse_baseline / 10**power10
+    ax.text(
+        0.95,
+        0.95,
+        rf"$\mathrm{{RMSE}}_{{\mathrm{{float, ref}}}} \approx {coeff:.2f} \times 10^{{{power10}}}$",
+        transform=ax.transAxes,
+        fontsize=mpl.rcParams["xtick.labelsize"],
+        ha="right",
+        va="top",
+        bbox={"facecolor": "white", "edgecolor": "lightgrey", "alpha": 0.8},
+    )
 
 
 if __name__ == "__main__":

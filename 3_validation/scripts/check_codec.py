@@ -17,7 +17,8 @@ from utils import compute_amplitudes, generate_codec, lookup_integer
 RESOLUTIONS = [2**10, 2**12, 2**14, 2**16, 2**18]
 
 NSTEP = 1024
-NSEQ = 256 * 64
+NSEQ = 256
+NSEED = 64
 
 
 def main():
@@ -59,31 +60,32 @@ def run(kernel_name: str, path_npz: Path):
     acf_wrapped[1:] += acf_wrapped[:0:-1]
     psd_ref = np.fft.rfft(acf_wrapped).real
 
-    # Sample trajectories
-    seed = np.frombuffer(kernel_name.encode("ascii"), dtype=np.uint8)
-    rng = np.random.default_rng(seed)
-    traj_raw = sample(terms, NSEQ, NSTEP, rng)
+    codecs = {resolution: generate_codec(resolution) for resolution in RESOLUTIONS}
+    rmse_raw_per_seed = np.zeros(NSEED)
+    rmse_codec_per_seed = {resolution: np.zeros(NSEED) for resolution in RESOLUTIONS}
 
-    # PSD of raw float trajectories
-    psd_raw = compute_amplitudes(traj_raw)
-    rmse_raw = np.sqrt(np.mean((psd_raw - psd_ref) ** 2))
+    for iseed in range(NSEED):
+        # Sample trajectories
+        seed = np.frombuffer(f"{kernel_name}-{iseed}".encode("ascii"), dtype=np.uint8)
+        rng = np.random.default_rng(seed)
+        traj_raw = sample(terms, NSEQ, NSTEP, rng)
 
-    # PSD of codec-encoded trajectories at each resolution
-    rmse_ref_per_resolution = {}
-    rmse_raw_per_resolution = {}
-    for resolution in RESOLUTIONS:
-        boundary, midpoint = generate_codec(resolution)
-        indices = lookup_integer(traj_raw, std, boundary)
-        traj_coded = midpoint[indices] * std
-        psd_coded = compute_amplitudes(traj_coded)
-        rmse_ref_per_resolution[resolution] = np.sqrt(np.mean((psd_coded - psd_ref) ** 2))
-        rmse_raw_per_resolution[resolution] = np.sqrt(np.mean((psd_coded - psd_raw) ** 2))
+        # PSD of raw float trajectories
+        psd_raw = compute_amplitudes(traj_raw)
+        rmse_raw_per_seed[iseed] = np.sqrt(np.mean((psd_raw - psd_ref) ** 2))
+
+        # PSD of codec-encoded trajectories at each resolution
+        for resolution in RESOLUTIONS:
+            boundary, midpoint = codecs[resolution]
+            indices = lookup_integer(traj_raw, std, boundary)
+            traj_codec = midpoint[indices] * std
+            psd_codec = compute_amplitudes(traj_codec)
+            rmse_codec_per_seed[resolution][iseed] = np.sqrt(np.mean((psd_codec - psd_raw) ** 2))
 
     np.savez(
         path_npz,
-        rmse_ref_per_resolution=rmse_ref_per_resolution,
-        rmse_raw=rmse_raw,
-        rmse_raw_per_resolution=rmse_raw_per_resolution,
+        rmse_raw_per_seed=rmse_raw_per_seed,
+        rmse_codec_per_seed=rmse_codec_per_seed,
     )
 
 
