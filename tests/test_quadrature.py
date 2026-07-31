@@ -11,8 +11,10 @@ from utils import make_grid_pow_rational_chebyshev
 @pytest.mark.parametrize(
     ("a0", "alpha", "theta"),
     [
+        (1.0, 1.5, 1.5),
         (1.0, 1.5, 2.0),
-        (1.0, 1.5, 3.5),
+        (1.0, 1.5, 2.5),
+        (1.0, 1.5, 3.0),
         (1.0, 1.5, 5.0),
     ],
 )
