@@ -74,7 +74,7 @@ def run(
 ):
     mpl.rc_file(path_mplrc)
     fig1, axs1 = plt.subplots(8, 3, figsize=(7, 10))
-    fig3, axs3 = plt.subplots(4, 3, figsize=(7, 10), sharex=True)
+    fig2, axs2 = plt.subplots(4, 3, figsize=(7, 10), sharex=True)
 
     for i, path_acf_npz in enumerate(paths_acf_consist_npz):
         row = i // 3
@@ -88,14 +88,14 @@ def run(
         )
 
         plot_codec(
-            axs3[row, col],
+            axs2[row, col],
             paths_codec_npz[i],
             row == 3,
             col == 0,
         )
 
     fig1.savefig(path_svg_acf_consist)
-    fig3.savefig(path_svg_codec)
+    fig2.savefig(path_svg_codec)
 
 
 def plot_acf_consist(ax_p, ax_hist, npz, ylabel, legend):
