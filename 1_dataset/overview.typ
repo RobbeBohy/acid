@@ -264,17 +264,6 @@ Example sequences, ACFs and PSDs for all kernels are shown in @fig-seqs, @fig-ac
 All kernels have an autocorrelation integral of 1.
 This is achieved by choosing the $A_0$ parameters of the models used in each kernel such that the sum of their autocorrelation integrals equals one.
 
-The kernels are parametrized such that the low-frequency region of the PSD can be approximated by either a quadratic dependence or a power-law dependence with exponent $1/2$.
-The inclusion of the $f^(1/2)$ term parallels an early discussion by Holian and Evans @holian1983shear, who argued that a long-time tail in the ACF proportional to $t^(-3/2)$ is expected to give rise to a $-f^(1/2)$ cusp in the low-frequency PSD.
-
-The deviation from the best of these fits is constrained to remain below 2.5% RMS for the first 10 frequency points (for $N = 1024$) and below 10% for the first 20 points.
-As a result,
-even short sequences ($N = 1024$) remain long enough to capture the slowest time correlations.
-
-For comparison,
-the relative error when averaging over $M = 256$ independent sequences is on the order of $1/sqrt(256) = 6.25%$,
-which is larger than the imposed deviation threshold for the 10 lowest frequency points.
-
 The power-law kernels are further controlled through the parameter $alpha$,
 which directly affects the second term of their MSD:
   - For $alpha gt 2$,
@@ -594,8 +583,6 @@ To ensure the correctness of the implementations and analytical expressions,
 a comprehensive set of unit tests is included in the repository.
 In particular,
 these tests verify:
-- The low-frequency part of the PSD,
-  as discussed above.
 - The correctness of the lookup table used for encoding and decoding the trajectories.
 - Consistency between derived quantities.
   The ACF is recovered from the MSD by differentiation, and the PSD from the ACF by Fourier transformation.
