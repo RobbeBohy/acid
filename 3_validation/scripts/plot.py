@@ -127,7 +127,7 @@ def run(
 
 
 def plot_acf_consist(ax_p, ax_hist, npz, ylabel, legend):
-    data = np.load(npz, allow_pickle=True)
+    data = np.load(npz)
     results = data["results"]
     p_distr_pvalue = data["p_value"]
 
@@ -214,15 +214,14 @@ def plot_stat(ax, npz, xlabel, ylabel):
 
 
 def plot_codec(ax, npz, xlabel, ylabel):
-    data = np.load(npz, allow_pickle=True)
+    data = np.load(npz)
+    resolutions = data["resolutions"]
     rmse_raw_per_seed = data["rmse_raw_per_seed"]
-    rmse_codec_per_seed = data["rmse_codec_per_seed"].item()
+    rmse_codec_per_seed = data["rmse_codec_per_seed"]
+    rmses_codec = rmse_codec_per_seed.mean(axis=1)
 
     # Production resolution (uint16)
     production_resolution = 2**16
-
-    resolutions = list(rmse_codec_per_seed.keys())
-    rmses_codec = np.array([rmse_codec_per_seed[r].mean() for r in resolutions])
     prod_idx = list(resolutions).index(production_resolution)
 
     ax.plot(resolutions, rmses_codec, marker="o", markersize=4, linewidth=1, color="k")

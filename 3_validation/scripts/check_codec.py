@@ -62,7 +62,7 @@ def run(kernel_name: str, path_npz: Path):
 
     codecs = {resolution: generate_codec(resolution) for resolution in RESOLUTIONS}
     rmse_raw_per_seed = np.zeros(NSEED)
-    rmse_codec_per_seed = {resolution: np.zeros(NSEED) for resolution in RESOLUTIONS}
+    rmse_codec_per_seed = np.zeros((len(RESOLUTIONS), NSEED))
 
     for iseed in range(NSEED):
         # Sample trajectories
@@ -75,17 +75,19 @@ def run(kernel_name: str, path_npz: Path):
         rmse_raw_per_seed[iseed] = np.sqrt(np.mean((psd_raw - psd_ref) ** 2))
 
         # PSD of codec-encoded trajectories at each resolution
-        for resolution in RESOLUTIONS:
+        for ires, resolution in enumerate(RESOLUTIONS):
             boundary, midpoint = codecs[resolution]
             indices = lookup_integer(traj_raw, std, boundary)
             traj_codec = midpoint[indices] * std
             psd_codec = compute_amplitudes(traj_codec)
-            rmse_codec_per_seed[resolution][iseed] = np.sqrt(np.mean((psd_codec - psd_raw) ** 2))
+            rmse_codec_per_seed[ires, iseed] = np.sqrt(np.mean((psd_codec - psd_raw) ** 2))
 
     np.savez(
         path_npz,
+        resolutions=np.array(RESOLUTIONS),
         rmse_raw_per_seed=rmse_raw_per_seed,
         rmse_codec_per_seed=rmse_codec_per_seed,
+        allow_pickle=False,
     )
 
 
