@@ -192,9 +192,7 @@ the assessment focuses on consistency across early, intermediate, and late times
       table.cell(colspan: 2, align: center)[*$t\/N = 0.9$*],
       [$T$], [$p$], [$T$], [$p$], [$T$], [$p$],
     ),
-    ..for (kernel, t1, p1, t2, p2, t3, p3) in stat {
-      (kernel, t1, p1, t2, p2, t3, p3)
-    },
+    ..stat.flatten(),
   ),
   caption: [
     Cramér-von Mises test statistics ($T$) and $p$-values for stationarity,
