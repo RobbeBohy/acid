@@ -73,32 +73,26 @@ def run(
     pool = {frac: [] for frac in time_fractions}
 
     for nstep in nsteps:
-        times = {frac: round(frac * (nstep - 1)) for frac in time_fractions}
+        ifracs = {frac: round(frac * (nstep - 1)) for frac in time_fractions}
         for nseq in nseqs:
             for iseed in range(nseed):
                 seq_path = f"nstep{nstep:05d}/nseq{nseq:04d}/sequences_{iseed:02d}.npy"
                 cdfi = unzipped_kernel[seq_path]
                 traj = lookup_table[cdfi] * std
-                for frac, idx in times.items():
+                for frac, idx in ifracs.items():
                     pool[frac].append(traj[:, idx].copy())
 
-    results = []
+    statistics = np.zeros(len(time_fractions))
+    pvalues = np.zeros(len(time_fractions))
 
-    for frac in time_fractions:
+    for i, frac in enumerate(time_fractions):
         x = np.concatenate(pool[frac])
         z = x / std
         cvm = cramervonmises(z, "norm")
+        statistics[i] = cvm.statistic
+        pvalues[i] = cvm.pvalue
 
-        results.append(
-            {
-                "time": frac,
-                "x_sorted": np.sort(x),
-                "statistic": cvm.statistic,
-                "pvalue": cvm.pvalue,
-            }
-        )
-
-    np.savez(path_npz, results=results, std=std)
+    np.savez(path_npz, statistics=statistics, pvalues=pvalues, allow_pickle=False)
 
 
 if __name__ == "__main__":
