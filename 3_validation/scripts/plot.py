@@ -128,17 +128,16 @@ def run(
 
 def plot_acf_consist(ax_p, ax_hist, npz, ylabel, legend):
     data = np.load(npz)
-    results = data["results"]
-    p_distr_pvalue = data["p_value"]
+    p_distr_pvalue = data["p_distr_pvalue"]
 
-    # Split data based on the covar
-    low_covar = [r for r in results if r["low_covar"]]
-    normal_covar = [r for r in results if not r["low_covar"]]
+    dts = data["dts"]
+    pvalues = data["pvalues"]
+    low_covars = data["low_covars"].astype(bool)
 
-    dts_normal = np.array([r["dt"] for r in normal_covar])
-    pvals_normal = np.array([r["pvalue"] for r in normal_covar])
-    dts_low = np.array([r["dt"] for r in low_covar])
-    pvals_low = np.array([r["pvalue"] for r in low_covar])
+    dts_normal = dts[~low_covars]
+    pvals_normal = pvalues[~low_covars]
+    dts_low = dts[low_covars]
+    pvals_low = pvalues[low_covars]
 
     ax_p.scatter(dts_normal, pvals_normal, marker="o", color="k", s=2)
     if len(dts_low):
