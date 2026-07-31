@@ -74,9 +74,15 @@ for kernel in settings.kernels:
 
 runpy(
     f"./scripts/plot.py ../matplotlibrc --acf_consist {' '.join(acf_consist_paths)} "
-    f"--stat {' '.join(stat_paths)} --codec {' '.join(codec_paths)} -- ${{out}}",
-    inp=["scripts/plot.py", "../matplotlibrc", *acf_consist_paths, *stat_paths, *codec_paths],
-    out=["output/acf_consist.svg", "output/stationarity.svg", "output/codec.svg"],
+    f"--codec {' '.join(codec_paths)} -- ${{out}}",
+    inp=["scripts/plot.py", "../matplotlibrc", *acf_consist_paths, *codec_paths],
+    out=["output/acf_consist.svg", "output/codec.svg"],
 )
 
-compile_typst("validation.typ")
+runpy(
+    "./${inp} ${out}",
+    inp=["scripts/tabulate_stat.py", *stat_paths],
+    out=["output/stationarity.csv"],
+)
+
+compile_typst("validation.typ", sysinp={"stationarity": Path("output/stationarity.csv")})

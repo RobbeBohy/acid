@@ -158,8 +158,7 @@ $
   H_0 : z_i tilde.op cal(N)(0, 1)
 $
 
-The resulting test statistics and $p$-values are reported for each relative time,
-together with corresponding Q-Q plots comparing empirical and theoretical quantiles in @fig-stat.
+The resulting test statistics and $p$-values are reported for each relative time in @tab-stat.
 
 As in the ACF consistency analysis,
 individual $p$-values should be interpreted with care:
@@ -171,19 +170,35 @@ Consequently,
 the occurrence of a $p$-value below $0.05$ does not in itself indicate a violation of stationarity.
 
 Instead of relying on these individual $p$-values,
-the assessment focuses on consistency across early, intermediate, and late times,
-together with the agreement observed in the Q-Q plots.
+the assessment focuses on consistency across early, intermediate, and late times.
 
+#let stat = csv(sys.inputs.stationarity)
 #figure(
-  image("output/stationarity.svg"),
+  table(
+    columns: 7,
+    align: (left, center, center, center, center, center, center),
+    stroke: none,
+    table.hline(y: 0),
+    table.hline(y: 1, start: 1),
+    table.hline(y: 2),
+    table.hline(y: stat.len() + 2),
+    table.vline(x: 1, stroke: 0.5pt),
+    table.vline(x: 3, stroke: 0.5pt),
+    table.vline(x: 5, stroke: 0.5pt),
+    table.header(
+      table.cell(rowspan: 2, align: horizon)[Kernel],
+      table.cell(colspan: 2, align: center)[*$t\/N = 0.01$*],
+      table.cell(colspan: 2, align: center)[*$t\/N = 0.5$*],
+      table.cell(colspan: 2, align: center)[*$t\/N = 0.9$*],
+      [$T$], [$p$], [$T$], [$p$], [$T$], [$p$],
+    ),
+    ..stat.flatten(),
+  ),
   caption: [
-Validation of stationarity.
-Q-Q plots of $x(t)$ at relative times $t/N = 0.01$, $0.5$, and $0.9$.
-Theoretical quantiles are computed from $cal(N)(0, sigma^2)$.
-The dotted line indicates perfect agreement.
+    Cramér-von Mises test statistics ($T$) and $p$-values for stationarity,
+    evaluated at three relative times $t\/N$ across the pooled trajectories, for each kernel.
   ],
-) <fig-stat>
-
+) <tab-stat>
 
 = Encoding/decoding scheme
 
