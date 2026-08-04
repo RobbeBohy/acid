@@ -99,10 +99,11 @@ def run(
                     t0 = rng.integers(0, nstep - dt)
                     pool[dt].append(traj[:, t0 + dt] - traj[:, t0])
 
-    results = []
+    pvalues = np.zeros(len(dts))
+    low_covars = np.zeros(len(dts), dtype=bool)
 
-    for dt, samples in pool.items():
-        y = np.concatenate(samples)
+    for i, dt in enumerate(dts):
+        y = np.concatenate(pool[dt])
         cov = acf[dt]
         var_y = 2 * (var - cov)
 
@@ -110,7 +111,7 @@ def run(
         # and the statistics of y are dominated by the variance rather than correlations.
         # In this regime, the test effectively reduces to probing stationarity,
         # which is already tested elsewhere.
-        low_covar = abs(cov) <= 1e-8
+        low_covars[i] = abs(cov) <= 1e-8
 
         if var_y < 0:
             raise ValueError("Negative variance encountered.")
@@ -123,15 +124,9 @@ def run(
 
         # Test whether the z follows the standard normal distribution
         cvm = cramervonmises(z, "norm")
-        results.append(
-            {
-                "dt": dt,
-                "pvalue": cvm.pvalue,
-                "low_covar": low_covar,
-            }
-        )
+        pvalues[i] = cvm.pvalue
 
-    filtered_pvals = np.array([r["pvalue"] for r in results if not r["low_covar"]])
+    filtered_pvals = pvalues[~low_covars]
 
     # Test whether the p-values follow the U(0,1) distribution
     p_distr_test = cramervonmises(filtered_pvals, "uniform")
@@ -141,7 +136,14 @@ def run(
             f"for n_pvals = {len(filtered_pvals)}, p-value = {p_distr_test.pvalue:.6f}."
         )
 
-    np.savez(path_npz, results=results, p_value=p_distr_test.pvalue)
+    np.savez(
+        path_npz,
+        dts=dts,
+        pvalues=pvalues,
+        low_covars=low_covars,
+        p_distr_pvalue=p_distr_test.pvalue,
+        allow_pickle=False,
+    )
 
 
 if __name__ == "__main__":

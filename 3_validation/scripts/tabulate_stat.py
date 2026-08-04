@@ -30,11 +30,13 @@ def run(paths_stat_npz, path_csv):
     with open(path_csv, "w") as fh:
         for stat_npz in paths_stat_npz:
             kernel = stat_npz.stem.split("_")[0]
-            results = np.load(stat_npz, allow_pickle=True)["results"]
+            data = np.load(stat_npz)
+            statistics = data["statistics"]
+            pvalues = data["pvalues"]
             fields = [f'"{kernel}"']
-            for result in results:
-                fields.append(f"{result['statistic']:.3f}")
-                fields.append(f"{result['pvalue']:.3f}")
+            for statistic, pvalue in zip(statistics, pvalues, strict=True):
+                fields.append(f"{statistic:.3f}")
+                fields.append(f"{pvalue:.3f}")
             print(",".join(fields), file=fh)
 
 

@@ -261,14 +261,6 @@ where $"PSD"_("float")^((k)) (f)$ is the floating-point precision PSD of sequenc
 $M$ is the number of independent sequences,
 and $N_f$ is the number of non-negative frequency points.
 
-
-The same procedure is then applied after encoding and decoding the floating-point trajectories using different codec resolutions.
-For a given number of bins $R$,
-the codec produces reconstructed trajectories from which the PSD and corresponding RMSE are computed relative to the reference PSD
-$
-  "RMSE"_"codec,ref"^((R)) = sqrt(1/(M N_f) sum_(f=1)^N_f sum_(k=1)^M ("PSD"_("codec")^((k,R))(f) - "PSD"_("reference")(f))^2)
-$
-The dependence of the $"RMSE"_"codec,ref"$ on the resolution is shown in the top panels of @fig-codec.
 In addition,
 the $"RMSE"$ between the codec and the floating-point PSD is evaluated.
 $
@@ -276,9 +268,9 @@ $
 $
 This measure isolates the deviations introduced by the codec itself,
 independently of sampling noise.
-The $"RMSE"_"codec,float"$ should converge to the floating-point baseline as the resolution increases.
+The $"RMSE"_"codec,float"$ should converge to zero as the resolution increases.
 
-The bottom panels of @fig-codec demonstrate the scenario with the largest number of independent sequences considered in ACID 2: $M = 256$ and $"nseed" = 64$.
+@fig-codec demonstrates the scenario with the largest number of independent sequences considered in ACID 2: $M = 256$ and $"nseed" = 64$.
 Even under these conditions,
 the error introduced by the codec using $2^16$ bins remains significantly smaller than the intrinsic sampling error.
 This comparison ensures that residual discrepancies are dominated by finite-sampling effects rather than by the discretization itself.
@@ -286,11 +278,8 @@ This comparison ensures that residual discrepancies are dominated by finite-samp
 #figure(
   image("output/codec.svg"),
   caption: [
-Codec validation.
-Top panels: RMSE of the codec PSDs relative to the reference PSD as a function of resolution,
-with the floating-point baseline (red dashed line)
-and the production resolution ($2^16$ bins, red marker)
-Bottom panels: RMSE of the codec PSDs relative to the floating-point PSDs.
+RMSE of the codec PSDs relative to the floating-point PSDs as a function of resolution,
+with the production resolution ($2^16$ bins) highlighted by a red marker.
   ],
 ) <fig-codec>
 
