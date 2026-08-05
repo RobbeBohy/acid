@@ -175,28 +175,22 @@ the assessment focuses on consistency across early, intermediate, and late times
 #let stat = csv(sys.inputs.stationarity)
 #figure(
   table(
-    columns: 7,
-    align: (left, center, center, center, center, center, center),
+    columns: 8,
+    align: (left, center, center, center, center, center, center, center),
     stroke: none,
     table.hline(y: 0),
-    table.hline(y: 1, start: 1),
     table.hline(y: 2),
     table.hline(y: stat.len() + 2),
-    table.vline(x: 1, stroke: 0.5pt),
-    table.vline(x: 3, stroke: 0.5pt),
-    table.vline(x: 5, stroke: 0.5pt),
     table.header(
       table.cell(rowspan: 2, align: horizon)[Kernel],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.01$*],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.5$*],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.9$*],
-      [$T$], [$p$], [$T$], [$p$], [$T$], [$p$],
+      table.cell(colspan: 7, align: center)[*Relative Time*],
+      [*0*], [*0.01*], [*0.10*], [*0.25*], [*0.50*], [*0.75*], [*0.90*],
     ),
     ..stat.flatten(),
   ),
   caption: [
-    Cramér-von Mises test statistics ($T$) and $p$-values for stationarity,
-    evaluated at three relative times $t\/N$ across the pooled trajectories, for each kernel.
+    Cramér-von Mises $p$-values for stationarity, evaluated at seven relative times $t\/N$,
+    pooled across all trajectories of the longest available sequence length ($N=65536$) for each kernel.
   ],
 ) <tab-stat>
 
