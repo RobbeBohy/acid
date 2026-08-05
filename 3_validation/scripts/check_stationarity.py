@@ -28,7 +28,7 @@ def parse_args():
     return parser.parse_args()
 
 
-REL_TIME = [0.0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9]
+REL_TIMES = [0.0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9]
 
 
 def run(
@@ -69,8 +69,8 @@ def run(
 
     unzipped_kernel = np.load(path_kernel)
 
-    ireltime = {reltime: round(reltime * (nstep - 1)) for reltime in REL_TIME}
-    pool = {reltime: [] for reltime in REL_TIME}
+    ireltime = {reltime: round(reltime * (nstep - 1)) for reltime in REL_TIMES}
+    pool = {reltime: [] for reltime in REL_TIMES}
 
     for nseq in nseqs:
         for iseed in range(nseed):
@@ -80,15 +80,15 @@ def run(
             for reltime, idx in ireltime.items():
                 pool[reltime].append(traj[:, idx].copy())
 
-    pvalues = np.zeros(len(REL_TIME))
+    pvalues = np.zeros(len(REL_TIMES))
 
-    for i, frac in enumerate(REL_TIME):
+    for i, frac in enumerate(REL_TIMES):
         x = np.concatenate(pool[frac])
         z = x / std
         cvm = cramervonmises(z, "norm")
         pvalues[i] = cvm.pvalue
 
-    np.savez(path_npz, pvalues=pvalues, allow_pickle=False)
+    np.savez(path_npz, reltimes=np.array(REL_TIMES), pvalues=pvalues, allow_pickle=False)
 
 
 if __name__ == "__main__":
