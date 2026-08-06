@@ -19,13 +19,16 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Stationarity test via CvM at relative time points."
+        description="Stationarity test via CvM at different relative times."
     )
     parser.add_argument("zip_in", type=Path, help="The kernel ZIP archive.")
     parser.add_argument("codec", type=Path, help="The codec ZIP to decode integers to floats.")
     parser.add_argument("settings", type=Path, help="The settings.json file.")
     parser.add_argument("npz_out", type=Path, help="The output NPZ path.")
     return parser.parse_args()
+
+
+REL_TIMES = [0.0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9]
 
 
 def run(
@@ -35,9 +38,8 @@ def run(
     path_npz: Path,
 ):
     """
-    Pool trajectories across all nsteps, nseqs, and seeds, then run the
-    Cramér-von Mises test for the trajectory at early, mid, and late
-    times.
+    Pool trajectories across all nseqs and seeds, at the longest available sequence length,
+    then run the Cramér-von Mises test at each relative time.
 
     Parameters
     ----------
@@ -57,7 +59,7 @@ def run(
 
     nseed = settings["nseed"]
     nseqs = settings["nseqs"]
-    nsteps = settings["nsteps"]
+    nstep = max(settings["nsteps"])  # only the longest available sequence length
 
     with zipfile.ZipFile(path_kernel) as zf, zf.open("meta.json") as f:
         meta = json.load(f)
@@ -65,34 +67,28 @@ def run(
     var = meta["var"]
     std = np.sqrt(var)
 
-    # Relative time points probing early, mid, and late trajectory
-    time_fractions = [0.01, 0.5, 0.9]
-
     unzipped_kernel = np.load(path_kernel)
 
-    pool = {frac: [] for frac in time_fractions}
+    ireltime = {reltime: round(reltime * (nstep - 1)) for reltime in REL_TIMES}
+    pool = {reltime: [] for reltime in REL_TIMES}
 
-    for nstep in nsteps:
-        ifracs = {frac: round(frac * (nstep - 1)) for frac in time_fractions}
-        for nseq in nseqs:
-            for iseed in range(nseed):
-                seq_path = f"nstep{nstep:05d}/nseq{nseq:04d}/sequences_{iseed:02d}.npy"
-                cdfi = unzipped_kernel[seq_path]
-                traj = lookup_table[cdfi] * std
-                for frac, idx in ifracs.items():
-                    pool[frac].append(traj[:, idx].copy())
+    for nseq in nseqs:
+        for iseed in range(nseed):
+            seq_path = f"nstep{nstep:05d}/nseq{nseq:04d}/sequences_{iseed:02d}.npy"
+            cdfi = unzipped_kernel[seq_path]
+            traj = lookup_table[cdfi] * std
+            for reltime, idx in ireltime.items():
+                pool[reltime].append(traj[:, idx].copy())
 
-    statistics = np.zeros(len(time_fractions))
-    pvalues = np.zeros(len(time_fractions))
+    pvalues = np.zeros(len(REL_TIMES))
 
-    for i, frac in enumerate(time_fractions):
+    for i, frac in enumerate(REL_TIMES):
         x = np.concatenate(pool[frac])
         z = x / std
         cvm = cramervonmises(z, "norm")
-        statistics[i] = cvm.statistic
         pvalues[i] = cvm.pvalue
 
-    np.savez(path_npz, statistics=statistics, pvalues=pvalues, allow_pickle=False)
+    np.savez(path_npz, reltimes=np.array(REL_TIMES), pvalues=pvalues, allow_pickle=False)
 
 
 if __name__ == "__main__":

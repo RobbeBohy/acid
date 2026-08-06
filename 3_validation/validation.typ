@@ -137,10 +137,9 @@ and $p_(U(0,1))$ corresponds to the CvM test for $U(0,1)$.
 ) <fig-acf-consist>
 
 = Stationarity
-Stationarity is assessed by evaluating the distribution of $x(t)$ at different relative times $t/N = 0.01$, $0.5$, and $0.9$,
-probing early, intermediate, and late stages of the trajectories.
+Stationarity is assessed by evaluating the distribution of $x(t)$ at seven different relative times.
 For each relative time,
-samples are pooled across all trajectories.
+samples are pooled across all trajectories of the longest available sequence length ($N=65536$) for each kernel.
 
 Under stationarity,
 the distribution of $x(t)$ must be independent of $t$ and follow
@@ -158,7 +157,7 @@ $
   H_0 : z_i tilde.op cal(N)(0, 1)
 $
 
-The resulting test statistics and $p$-values are reported for each relative time in @tab-stat.
+The resulting $p$-values are reported for each relative time in @tab-stat.
 
 As in the ACF consistency analysis,
 individual $p$-values should be interpreted with care:
@@ -169,34 +168,31 @@ a fraction $alpha$ of all tests are expected to have $p lt alpha$.
 Consequently,
 the occurrence of a $p$-value below $0.05$ does not in itself indicate a violation of stationarity.
 
-Instead of relying on these individual $p$-values,
-the assessment focuses on consistency across early, intermediate, and late times.
+Instead of relying on individual $p$-values,
+the assessment focuses on consistency across the full range of relative times.
 
 #let stat = csv(sys.inputs.stationarity)
+#let header_row = stat.at(0)
+#let data_rows = stat.slice(1)
+
 #figure(
   table(
-    columns: 7,
-    align: (left, center, center, center, center, center, center),
+    columns: 8,
+    align: (left, center, center, center, center, center, center, center),
     stroke: none,
     table.hline(y: 0),
-    table.hline(y: 1, start: 1),
     table.hline(y: 2),
-    table.hline(y: stat.len() + 2),
-    table.vline(x: 1, stroke: 0.5pt),
-    table.vline(x: 3, stroke: 0.5pt),
-    table.vline(x: 5, stroke: 0.5pt),
+    table.hline(y: stat.len() + 1),
     table.header(
       table.cell(rowspan: 2, align: horizon)[Kernel],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.01$*],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.5$*],
-      table.cell(colspan: 2, align: center)[*$t\/N = 0.9$*],
-      [$T$], [$p$], [$T$], [$p$], [$T$], [$p$],
+      table.cell(colspan: 7, align: center)[*Relative Time*],
+      ..header_row.slice(1).map(label => [*#label*])
     ),
-    ..stat.flatten(),
+    ..data_rows.flatten(),
   ),
   caption: [
-    Cramér-von Mises test statistics ($T$) and $p$-values for stationarity,
-    evaluated at three relative times $t\/N$ across the pooled trajectories, for each kernel.
+    Cramér-von Mises $p$-values for stationarity, evaluated at seven relative times $t\/N$,
+    pooled across all trajectories of the longest available sequence length ($N=65536$) for each kernel.
   ],
 ) <tab-stat>
 

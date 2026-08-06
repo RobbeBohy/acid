@@ -27,16 +27,21 @@ def parse_args():
 
 
 def run(paths_stat_npz, path_csv):
+    header = None
     with open(path_csv, "w") as fh:
         for stat_npz in paths_stat_npz:
             kernel = stat_npz.stem.split("_")[0]
             data = np.load(stat_npz)
-            statistics = data["statistics"]
+            reltimes = data["reltimes"]
             pvalues = data["pvalues"]
-            fields = [f'"{kernel}"']
-            for statistic, pvalue in zip(statistics, pvalues, strict=True):
-                fields.append(f"{statistic:.3f}")
-                fields.append(f"{pvalue:.3f}")
+
+            if header is None:
+                header = [""]  # Empty string to keep all rows the same length
+                header.extend(f"{reltime:.2f}" for reltime in reltimes)
+                print(",".join(header), file=fh)
+
+            fields = [kernel]
+            fields.extend(f"{pvalue:.3f}" for pvalue in pvalues)
             print(",".join(fields), file=fh)
 
 
