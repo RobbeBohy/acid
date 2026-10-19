@@ -10,7 +10,7 @@ from utils import make_grid_pow_rational_chebyshev
 
 np.seterr(over="raise", under="ignore", divide="raise", invalid="raise")
 
-__all__ = ("compute", "sample", "summarize")
+__all__ = ("KernelSummary", "compute", "sample", "summarize")
 
 
 ACINT_REF = 1.0
@@ -435,8 +435,38 @@ def compute_f90(
     )
 
 
-def summarize(terms: list[BaseTerm]) -> dict:
-    """Compute the grid-independent properties of a kernel.
+@attrs.define
+class KernelSummary:
+    """Container class holding the grid-independent properties of a kernel."""
+
+    var: float = attrs.field(converter=float)
+    """The variance."""
+
+    acint: float = attrs.field(converter=float)
+    """The ACF integral."""
+
+    corrtime_int: float = attrs.field(converter=float)
+    """The integrated correlation time."""
+
+    corrtime_exp: float | None = attrs.field(converter=attrs.converters.optional(float))
+    """The exponential correlation time, or None if not defined."""
+
+    n90: int = attrs.field(converter=int)
+    """The settling lag of the ACF integral, see :func:`compute_n90`."""
+
+    f90: float = attrs.field(converter=float)
+    """The 90% frequency of the PSD integral, see :func:`compute_f90`."""
+
+    typst: str = attrs.field()
+    """A typst equation describing the kernel."""
+
+    latex: str = attrs.field()
+    """A latex equation describing the kernel."""
+
+
+def summarize(terms: list[BaseTerm]) -> KernelSummary:
+    """Compute the properties of the kernel
+    that do not depend on the sequence length or the number of sequences.
 
     Parameters
     ----------
@@ -446,16 +476,8 @@ def summarize(terms: list[BaseTerm]) -> dict:
     Returns
     -------
     summary
-        A dictionary with the following keys:
-
-        - ``var``: the variance.
-        - ``acint``: the ACF integral.
-        - ``corrtime_int``: the integrated correlation time.
-        - ``corrtime_exp``: the exponential correlation time, or None if not defined.
-        - ``n90``: the settling lag of the ACF integral, see :func:`compute_n90`.
-        - ``f90``: the 90% frequency of the PSD integral, see :func:`compute_f90`.
-        - ``typst``: a typst equation describing the kernel.
-        - ``latex``: a latex equation describing the kernel.
+        The grid-independent properties of the kernel,
+        including its typst and latex equations.
     """
     acint = 0.0
     variance = 0.0
@@ -481,16 +503,16 @@ def summarize(terms: list[BaseTerm]) -> dict:
     corrtime_exp = None
     if len(corrtimes_exp) == 1 and corrtimes_exp[0] is not None:
         corrtime_exp = corrtimes_exp[0]
-    return {
-        "var": float(variance),
-        "acint": float(acint),
-        "corrtime_int": float(0.5 * acint / variance),
-        "corrtime_exp": corrtime_exp,
-        "n90": int(compute_n90(nonwhite_terms, acint_nonwhite)),
-        "f90": float(compute_f90(nonwhite_terms, variance_nonwhite)),
-        "typst": " + ".join(term.typst for term in terms),
-        "latex": " + ".join(term.latex for term in terms),
-    }
+    return KernelSummary(
+        var=variance,
+        acint=acint,
+        corrtime_int=0.5 * acint / variance,
+        corrtime_exp=corrtime_exp,
+        n90=compute_n90(nonwhite_terms, acint_nonwhite),
+        f90=compute_f90(nonwhite_terms, variance_nonwhite),
+        typst=" + ".join(term.typst for term in terms),
+        latex=" + ".join(term.latex for term in terms),
+    )
 
 
 def sample(

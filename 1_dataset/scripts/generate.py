@@ -8,6 +8,7 @@ import json
 import zipfile
 from runpy import run_path
 
+import attrs
 import numpy as np
 from kernels import compute, sample, summarize
 from path import Path
@@ -116,7 +117,7 @@ def run(path_codec: Path, path_settings: Path, kernel: str, out: Path):
         dump_meta(
             "meta.json",
             zf,
-            {"kernel": kernel, "nseed": nseed, **summary},
+            {"kernel": kernel, "nseed": nseed, **attrs.asdict(summary)},
         )
 
 

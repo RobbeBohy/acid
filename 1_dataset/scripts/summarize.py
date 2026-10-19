@@ -30,12 +30,12 @@ def run(inp: Path, out: Path):
             path_py = f"kernels/{kernel}.py"
             amend(inp=path_py)
             summary = summarize(run_path(path_py)["terms"])
-            corrtime_exp = summary["corrtime_exp"]
+            corrtime_exp = summary.corrtime_exp
             corrtime_exp_str = "/" if corrtime_exp is None else f"{corrtime_exp:.3f}"
             print(
-                f'"{kernel}","{summary["typst"]}","{summary["latex"]}",'
-                f"{summary['var']:.3f},{summary['acint']:.3f},{summary['corrtime_int']:.3f},"
-                f'"{corrtime_exp_str}",{summary["n90"]},{summary["f90"]:.3f}',
+                f'"{kernel}","{summary.typst}","{summary.latex}",'
+                f"{summary.var:.3f},{summary.acint:.3f},{summary.corrtime_int:.3f},"
+                f'"{corrtime_exp_str}",{summary.n90},{summary.f90:.3f}',
                 file=fh,
             )
 
